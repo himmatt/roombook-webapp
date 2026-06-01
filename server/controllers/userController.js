@@ -40,10 +40,33 @@ const getUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password')
 
-    res.status(200).json({
+    const list = users
+
+    return res.status(200).json({
       success: true,
-      count: users.length,
-      users,
+      message: 'Users retrieved successfully',
+      data: {
+        count: list.length,
+        list,
+        columns: [
+          {
+            header: 'Name',
+            accessorKey: 'name',
+          },
+          {
+            header: 'Username',
+            accessorKey: 'userName',
+          },
+          {
+            header: 'Role',
+            accessorKey: 'role',
+          },
+          {
+            header: 'Created At',
+            accessorKey: 'createdAt',
+          },
+        ],
+      },
     })
   } catch (error) {
     res.status(500).json({
