@@ -270,9 +270,65 @@ const updateUser = async (req, res) => {
   }
 }
 
+// const deleteUser = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.params.id)
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'User not found',
+//       })
+//     }
+
+//     await Booking.deleteMany({
+//       userId: user._id,
+//     })
+
+//     await user.deleteOne()
+
+//     res.status(200).json({
+//       success: true,
+//       message: 'User and related bookings deleted',
+//     })
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     })
+//   }
+// }
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
+    const requesterId = req.user._id.toString()
+    const requesterRole = req.user.role
+
+    const targetId = req.params.id
+
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user id',
+      })
+    }
+
+    // Only admin can delete users
+    if (requesterRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admin can delete users',
+      })
+    }
+
+    // Admin cannot delete themselves
+    if (requesterId === targetId) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account',
+      })
+    }
+
+    const user = await User.findById(targetId)
 
     if (!user) {
       return res.status(404).json({
@@ -284,15 +340,27 @@ const deleteUser = async (req, res) => {
     await Booking.deleteMany({
       userId: user._id,
     })
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({
+        role: 'admin',
+      })
+
+      if (adminCount === 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot delete the last admin user',
+        })
+      }
+    }
 
     await user.deleteOne()
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'User and related bookings deleted',
     })
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     })

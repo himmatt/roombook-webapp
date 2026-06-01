@@ -18,12 +18,9 @@ const createBooking = async (req, res) => {
     }
 
     const overlap = await Booking.findOne({
-      startTime: {
-        $lt: new Date(endTime),
-      },
-      endTime: {
-        $gt: new Date(startTime),
-      },
+      status: 'booked',
+      startTime: { $lt: new Date(endTime) },
+      endTime: { $gt: new Date(startTime) },
     })
 
     if (overlap) {
@@ -53,10 +50,33 @@ const createBooking = async (req, res) => {
 
 const getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find().populate('userId', 'name userName role').sort({ startTime: 1 })
+    const { role, _id: userId } = req.user
 
-    const list = bookings
+    let filter = {}
 
+    // user can only see their own bookings
+    if (role === 'user') {
+      filter.userId = userId
+    }
+
+    const bookings = await Booking.find(filter)
+      .populate('userId', 'name userName role')
+      .sort({ startTime: -1, createdAt: -1 })
+
+    const list = bookings.map((b) => {
+      const start = new Date(b.startTime)
+      const end = new Date(b.endTime)
+
+      const durationMs = end - start
+      const durationMinutes = Math.floor(durationMs / (1000 * 60))
+      const hours = Math.floor(durationMinutes / 60)
+      const mins = durationMinutes % 60
+
+      return {
+        ...b.toObject(),
+        duration: `${hours}h ${mins}m`,
+      }
+    })
     return res.status(200).json({
       success: true,
       message: 'Bookings retrieved successfully',
@@ -77,8 +97,12 @@ const getBookings = async (req, res) => {
             accessorKey: 'endTime',
           },
           {
-            header: 'Created At',
-            accessorKey: 'createdAt',
+            header: 'Status',
+            accessorKey: 'status',
+          },
+          {
+            header: 'Duration',
+            accessorKey: 'duration',
           },
         ],
       },
@@ -93,7 +117,8 @@ const getBookings = async (req, res) => {
 
 const deleteBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id)
+    const bookingId = req.params.id
+    const booking = await Booking.findById(bookingId)
 
     if (!booking) {
       return res.status(404).json({
@@ -115,7 +140,9 @@ const deleteBooking = async (req, res) => {
       })
     }
 
-    await booking.deleteOne()
+    await Booking.findByIdAndUpdate(bookingId, {
+      status: 'cancelled',
+    })
 
     res.status(200).json({
       success: true,
