@@ -322,26 +322,26 @@ const ReactTable = ({ dataRows, dataColumns, prefix, deleteUrl, onRefresh }) => 
               <Fragment key={row.id}>
                 <tr
                   className={`h-8.5 ${rowIndex % 2 === 0 ? 'bg-[#F0F8FF]' : 'bg-card-color'} hover:bg-[#0043D81A] cursor-pointer`}
-                  onClick={() => {
-                    const original = row.original
-                    const reasonRoutes = [
-                      { key: 'usage', path: 'usage-logs' },
-                      { key: 'top-up', path: 'top-up' },
-                    ]
-                    const matchedRoute = reasonRoutes.find((item) => item.key === original.reason)
-                    const id = original.id || original._id
-                    let path = ''
+                  // onClick={() => {
+                  //   const original = row.original
+                  //   const reasonRoutes = [
+                  //     { key: 'usage', path: 'usage-logs' },
+                  //     { key: 'top-up', path: 'top-up' },
+                  //   ]
+                  //   const matchedRoute = reasonRoutes.find((item) => item.key === original.reason)
+                  //   const id = original.id || original._id
+                  //   let path = ''
 
-                    if (matchedRoute && original.relatedId) {
-                      path = `${pathname}/${matchedRoute.path}/${original.relatedId}`
-                    } else {
-                      path = prefix ? `${pathname}/${prefix}/${id}` : `${pathname}/${id}`
-                    }
+                  //   if (matchedRoute && original.relatedId) {
+                  //     path = `${pathname}/${matchedRoute.path}/${original.relatedId}`
+                  //   } else {
+                  //     path = prefix ? `${pathname}/${prefix}/${id}` : `${pathname}/${id}`
+                  //   }
 
-                    {
-                      params.id ? dispatch(openModal(path)) : navigate(path)
-                    }
-                  }}
+                  //   {
+                  //     params.id ? dispatch(openModal(path)) : navigate(path)
+                  //   }
+                  // }}
                 >
                   {row.getVisibleCells().map((cell, index) => {
                     return (

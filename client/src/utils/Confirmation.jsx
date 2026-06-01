@@ -2,19 +2,24 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import { closeModal } from '../store/slices/modalSlice'
 
-const Confirmation = ({ onConfirm, loading = false }) => {
+const Confirmation = ({
+  onConfirm,
+  loading = false,
+  title = 'Confirm Delete',
+  description = 'This action cannot be undone.',
+}) => {
   const dispatch = useDispatch()
 
-  const { isOpen, title, description } = useSelector((state) => state.modal)
+  const { isOpen } = useSelector((state) => state.modal)
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-md bg-white/30">
+      <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+        <h3 className="mb-2 text-lg font-semibold text-slate-800">{title}</h3>
 
-        <p className="text-slate-500 mb-6">{description}</p>
+        <p className="mb-6 text-slate-500">{description}</p>
 
         <div className="flex justify-end gap-3">
           <button

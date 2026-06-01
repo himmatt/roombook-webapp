@@ -1,52 +1,23 @@
 import { useState } from 'react'
-import DeleteIcon from '../../assets/icons/DeleteIcon'
-import { useLocation, useNavigate, useParams } from 'react-router'
-import { useAppDispatch, useAppSelector } from '../../store/hook'
-import { openModal, closeModal } from '../../store/slices/modalSlice'
-
 import { toast } from 'sonner'
+
+import DeleteIcon from '../../assets/icons/DeleteIcon'
+import api from '../../api/axios'
+
 import Confirmation from '../../utils/Confirmation'
 
-const DeleteBlockRules = {
-  deleteprotection: [true],
-}
-const ActionsCell = ({ id, prefix, deleteUrl, onRefresh, rowData }) => {
-  const [isLoading, setIsLoading] = useState(false)
-  const params = useParams()
-  const routeLocation = useLocation()
-  const pathname = routeLocation.pathname
+import { openModal, closeModal, selectModalMode } from '../../store/slices/modalSlice'
+
+import { useAppDispatch, useAppSelector } from '../../store/hook'
+
+const ActionsCell = ({ id, deleteUrl, onRefresh }) => {
   const dispatch = useAppDispatch()
 
   const modalMode = useAppSelector(selectModalMode)
-  const navigate = useNavigate()
 
-  const isDeleteBlocked = () => {
-    return Object.entries(DeleteBlockRules).some(([field, blockedValues]) => {
-      const fieldValue = rowData?.[field]
+  const [isLoading, setIsLoading] = useState(false)
 
-      return blockedValues.some(
-        (blockedValue) => String(fieldValue).toLowerCase() === String(blockedValue).toLowerCase()
-      )
-    })
-  }
-  const formatFieldName = (field) => {
-    return field.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())
-  }
-
-  const getBlockedMessage = () => {
-    const matchedRule = Object.entries(DeleteBlockRules).find(([field, blockedValues]) =>
-      blockedValues.some(
-        (blockedValue) => String(rowData?.[field]).toLowerCase() === String(blockedValue).toLowerCase()
-      )
-    )
-    if (matchedRule) {
-      const [field] = matchedRule
-      return `This resource can’t be deleted while ${formatFieldName(field)} is ${rowData?.[field]}.`
-    }
-    return 'This resource cannot be deleted.'
-  }
-
-  const handleDelete = async (id, deleteUrl) => {
+  const handleDelete = () => {
     setIsLoading(true)
 
     api
@@ -54,7 +25,7 @@ const ActionsCell = ({ id, prefix, deleteUrl, onRefresh, rowData }) => {
       .then((response) => {
         toast.success(response.data?.message || 'Deleted successfully')
 
-        onRefresh()
+        onRefresh?.()
 
         dispatch(closeModal())
       })
@@ -65,34 +36,27 @@ const ActionsCell = ({ id, prefix, deleteUrl, onRefresh, rowData }) => {
         setIsLoading(false)
       })
   }
+
   return (
     <>
-      <span className="flex items-center justify-center gap-2">
-        {deleteUrl ? (
-          <button
-            className="action-btn-icon tooltip tooltip-up hover:before:content-[attr(data-tip)] before:pointer-events-none"
-            data-tip="Delete"
-            onClick={() => {
-              if (!isDeleteBlocked()) {
-                dispatch(openModal(`delete-row-${id}`))
-              } else toast.warning(getBlockedMessage())
-            }}
-          >
-            <DeleteIcon color="#DC143C" />
-          </button>
-        ) : null}
-      </span>
+      <button
+        className="p-2 rounded-lg hover:bg-red-50 transition"
+        onClick={() =>
+          dispatch(
+            openModal({
+              mode: `delete-row-${id}`,
+              data: {
+                id,
+                deleteUrl,
+              },
+            })
+          )
+        }
+      >
+        <DeleteIcon color="#DC143C" />
+      </button>
 
-      {modalMode === `delete-row-${id}` ? (
-        <Confirmation
-          onConfirm={() => {
-            if (deleteUrl) {
-              handleDelete(id, deleteUrl)
-            }
-          }}
-          isLoading={isLoading}
-        />
-      ) : null}
+      {modalMode === `delete-row-${id}` && <Confirmation isLoading={isLoading} onConfirm={handleDelete} />}
     </>
   )
 }

@@ -42,8 +42,8 @@ const Sidebar = () => {
   }
 
   return (
-    <aside className="w-60 h-screen bg-white border-r border-slate-200 flex flex-col">
-      <div className="h-16 px-6 flex items-center border-b border-slate-200">
+    <aside className="w-60 h-screen bg-white  flex flex-col">
+      <div className="h-16 px-6 flex items-center ">
         <h1 className="text-lg font-semibold text-slate-800">Meeting Room</h1>
       </div>
 

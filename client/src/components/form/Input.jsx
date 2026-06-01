@@ -24,6 +24,7 @@ const Input = ({ label, value, placeholder, type = 'text', onChange, errorMessag
           transition-all
           duration-200
           bg-white
+          text-[14px]
           ${
             errorMessage
               ? 'border-red-500 focus:ring-2 focus:ring-red-200'
@@ -33,7 +34,7 @@ const Input = ({ label, value, placeholder, type = 'text', onChange, errorMessag
         `}
       />
 
-      {errorMessage && <p className="mt-1 text-sm text-red-500">{errorMessage}</p>}
+      {errorMessage && <p className="mt-1 text-[12px] text-red-500">{errorMessage}</p>}
     </div>
   )
 }
