@@ -48,27 +48,93 @@ const createBooking = async (req, res) => {
   }
 }
 
+// const getBookings = async (req, res) => {
+//   try {
+//     const page = Number(req.query.page) || 1
+//     const limit = Number(req.query.limit) || 10
+
+//     const skip = (page - 1) * limit
+
+//     const bookings = await Booking.find()
+//       .populate('userId', 'name userName role')
+//       .sort({ startTime: -1, createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//     const total = await Booking.countDocuments()
+
+//     const list = bookings.map((b) => {
+//       const start = new Date(b.startTime)
+//       const end = new Date(b.endTime)
+
+//       const durationMs = end - start
+//       const durationMinutes = Math.floor(durationMs / (1000 * 60))
+//       const hours = Math.floor(durationMinutes / 60)
+//       const mins = durationMinutes % 60
+
+//       return {
+//         ...b.toObject(),
+//         duration: `${hours}h ${mins}m`,
+//       }
+//     })
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Bookings retrieved successfully',
+//       data: {
+//         count: list.length,
+//         list,
+//         columns: [
+//           {
+//             header: 'User',
+//             accessorKey: 'userId.name',
+//           },
+//           {
+//             header: 'Start Time',
+//             accessorKey: 'startTime',
+//           },
+//           {
+//             header: 'End Time',
+//             accessorKey: 'endTime',
+//           },
+//           {
+//             header: 'Status',
+//             accessorKey: 'status',
+//           },
+//           {
+//             header: 'Duration',
+//             accessorKey: 'duration',
+//           },
+//         ],
+//       },
+//     })
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     })
+//   }
+// }
 const getBookings = async (req, res) => {
   try {
-    const { role, _id: userId } = req.user
+    const page = Math.max(Number(req.query.page) || 1, 1)
+    const limit = Math.max(Number(req.query.limit) || 10, 1)
 
-    let filter = {}
+    const skip = (page - 1) * limit
 
-    // user can only see their own bookings
-    if (role === 'user') {
-      filter.userId = userId
-    }
-
-    const bookings = await Booking.find(filter)
-      .populate('userId', 'name userName role')
-      .sort({ startTime: -1, createdAt: -1 })
+    const [bookings, total] = await Promise.all([
+      Booking.find()
+        .populate('userId', 'name userName role')
+        .sort({ startTime: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Booking.countDocuments(),
+    ])
 
     const list = bookings.map((b) => {
       const start = new Date(b.startTime)
       const end = new Date(b.endTime)
 
-      const durationMs = end - start
-      const durationMinutes = Math.floor(durationMs / (1000 * 60))
+      const durationMinutes = Math.floor((end - start) / (1000 * 60))
+
       const hours = Math.floor(durationMinutes / 60)
       const mins = durationMinutes % 60
 
@@ -77,10 +143,15 @@ const getBookings = async (req, res) => {
         duration: `${hours}h ${mins}m`,
       }
     })
+
     return res.status(200).json({
       success: true,
       message: 'Bookings retrieved successfully',
       data: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
         count: list.length,
         list,
         columns: [
@@ -108,7 +179,7 @@ const getBookings = async (req, res) => {
       },
     })
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     })
@@ -131,7 +202,7 @@ const deleteBooking = async (req, res) => {
 
     const isOwner = req.user.role === 'owner'
 
-    const isCreator = booking.userId.toString() === req.user._id
+    const isCreator = booking.userId.toString() === req.user._id.toString()
 
     if (!isAdmin && !isOwner && !isCreator) {
       return res.status(403).json({
@@ -228,10 +299,104 @@ const getUsageSummary = async (req, res) => {
   }
 }
 
+const getDashboardSummary = async (req, res) => {
+  try {
+    const { role, name } = req.user
+
+    const now = new Date()
+
+    // visible to ALL roles
+    const currentBooking = await Booking.findOne({
+      startTime: { $lte: now },
+      endTime: { $gte: now },
+      status: 'booked',
+    })
+      .populate('userId', 'name userName')
+      .sort({ startTime: 1 })
+
+    const data = {
+      role,
+      currentBooking,
+      name,
+    }
+
+    // ADMIN + OWNER
+    if (role === 'admin' || role === 'owner') {
+      const [totalBookings, totalUsers] = await Promise.all([Booking.countDocuments(), User.countDocuments()])
+
+      data.totalBookings = totalBookings
+      data.totalUsers = totalUsers
+    }
+
+    // OWNER ONLY
+    if (role === 'owner') {
+      const bookingsByUser = await Booking.aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user',
+          },
+        },
+        {
+          $unwind: '$user',
+        },
+        {
+          $group: {
+            _id: '$userId',
+
+            name: {
+              $first: '$user.name',
+            },
+
+            userName: {
+              $first: '$user.userName',
+            },
+
+            totalBookings: {
+              $sum: 1,
+            },
+
+            bookings: {
+              $push: {
+                bookingId: '$_id',
+                startTime: '$startTime',
+                endTime: '$endTime',
+                status: '$status',
+                createdAt: '$createdAt',
+              },
+            },
+          },
+        },
+        {
+          $sort: {
+            totalBookings: -1,
+          },
+        },
+      ])
+
+      data.bookingsByUser = bookingsByUser
+      data.mostActiveUser = bookingsByUser.length > 0 ? bookingsByUser[0] : null
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dashboard summary retrieved successfully',
+      data,
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    })
+  }
+}
 module.exports = {
   createBooking,
   getBookings,
   deleteBooking,
   getBookingsGroupedByUser,
   getUsageSummary,
+  getDashboardSummary,
 }

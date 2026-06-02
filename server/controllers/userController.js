@@ -38,7 +38,14 @@ const createUser = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password')
+    const page = Math.max(Number(req.query.page) || 1, 1)
+    const limit = Math.max(Number(req.query.limit) || 10, 1)
+
+    const skip = (page - 1) * limit
+    const [users, total] = await Promise.all([
+      User.find().select('-password').skip(skip).limit(limit),
+      User.countDocuments(),
+    ])
 
     const list = users
 
@@ -48,6 +55,10 @@ const getUsers = async (req, res) => {
       data: {
         count: list.length,
         list,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
         columns: [
           {
             header: 'Name',

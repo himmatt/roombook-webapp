@@ -11,7 +11,7 @@ const {
   getBookings,
   deleteBooking,
   getBookingsGroupedByUser,
-  getUsageSummary,
+  getDashboardSummary,
 } = require('../controllers/bookingController')
 
 router.use(authMiddleware)
@@ -21,8 +21,8 @@ router.post('/', createBooking)
 router.get('/', getBookings)
 
 router.delete('/:id', deleteBooking)
+router.get('/overview', getDashboardSummary)
 
 router.get('/grouped', authorize('owner'), getBookingsGroupedByUser)
-router.get('/summary', authorize('owner'), getUsageSummary)
 
 module.exports = router
