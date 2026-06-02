@@ -9,8 +9,11 @@ import Confirmation from '../../utils/Confirmation'
 import { openModal, closeModal, selectModalMode } from '../../store/slices/modalSlice'
 
 import { useAppDispatch, useAppSelector } from '../../store/hook'
+import PiPenIcon from '../../assets/icons/PiPenIcon'
+import Modal from '../../utils/Modal'
+import UserUpdatePage from '../../pages/UserUpdatePage'
 
-const ActionsCell = ({ id, deleteUrl, onRefresh }) => {
+const ActionsCell = ({ id, deleteUrl, onRefresh, updateUrl, rowData }) => {
   const dispatch = useAppDispatch()
 
   const modalMode = useAppSelector(selectModalMode)
@@ -56,7 +59,31 @@ const ActionsCell = ({ id, deleteUrl, onRefresh }) => {
         <DeleteIcon color="#DC143C" />
       </button>
 
-      {modalMode === `delete-row-${id}` && <Confirmation isLoading={isLoading} onConfirm={handleDelete} />}
+      {updateUrl && (
+        <button
+          className="p-2 rounded-lg hover:bg-red-50 transition"
+          onClick={() =>
+            dispatch(
+              openModal({
+                mode: `update-row-${id}`,
+                data: {
+                  id,
+                  updateUrl,
+                },
+              })
+            )
+          }
+        >
+          <PiPenIcon color="#" />
+        </button>
+      )}
+      {modalMode === `delete-row-${id}` ? (
+        <Confirmation isLoading={isLoading} onConfirm={handleDelete} />
+      ) : modalMode === `update-row-${id}` ? (
+        <Modal needCloseButton={true}>
+          <UserUpdatePage updateUrl={updateUrl} id={id} onRefresh={onRefresh} rowData={rowData} />
+        </Modal>
+      ) : null}
     </>
   )
 }

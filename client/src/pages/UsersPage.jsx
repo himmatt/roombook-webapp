@@ -5,32 +5,44 @@ import Loading from '../utils/Loading'
 import PiArrowClockWiseIcon from '../assets/icons/PiArrowClockWiseIcon'
 import { NavLink, useParams } from 'react-router'
 import CreateBoxIconNew from '../assets/icons/CreateBoxIconNew'
+import { toast } from 'sonner'
+import { useSelector } from 'react-redux'
+import NotFoundPage from './NotFoundPage'
 
 const UsersPage = () => {
   const [users, setUsers] = useState([])
   const [columns, setColumns] = useState([])
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const user = useSelector((state) => state.auth.user)
   const [loading, setLoading] = useState(false)
 
   const getUsers = () => {
     setLoading(true)
 
     api
-      .get('/users')
+      .get(`/users?page=${page}&limit=${limit}`)
       .then((response) => {
         setUsers(response.data.data.list || [])
         setColumns(response.data.data.columns || [])
+        setTotalItems(response.data.data.total || 0)
+        setTotalPages(response.data.data.totalPages || 0)
       })
       .catch((error) => {
-        console.error(error?.response?.data?.message)
+        toast.error(error.response?.data?.message || 'Failed to fetch users')
       })
       .finally(() => {
         setLoading(false)
       })
   }
-
+  if (user.role !== 'admin') {
+    return <NotFoundPage />
+  }
   useEffect(() => {
     getUsers()
-  }, [])
+  }, [page, limit])
 
   return (
     <div className="">
@@ -63,7 +75,20 @@ const UsersPage = () => {
           </button>
         </NavLink>
       </div>
-      <DataTable data={users} columns={columns} loading={loading} deleteUrl="/users" onRefresh={getUsers} />
+      <DataTable
+        data={users}
+        columns={columns}
+        loading={loading}
+        deleteUrl="/users"
+        onRefresh={getUsers}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        updateUrl="/users"
+      />
     </div>
   )
 }

@@ -1,9 +1,10 @@
-import DashboardPage from '../pages/DashboardPage'
 import UsersPage from '../pages/UsersPage'
 import BookingsPage from '../pages/BookingsPage'
 import ProfilePage from '../pages/ProfilePage'
 import UserCreatePage from '../pages/UserCreatePage'
 import BookingCreatePage from '../pages/BookingCreatePage'
+import DashboardPage from '../pages/Dashboard'
+import OwnerBookingDetail from '../pages/Dashboard/OwnerBookingDeatil'
 export const ROUTES = [
   {
     url: '/',
@@ -36,5 +37,10 @@ export const ROUTES = [
     url: '/bookings/add',
     component: <BookingCreatePage />,
     roles: ['admin', 'owner', 'user'],
+  },
+  {
+    url: '/dashboard/booking-details',
+    component: <OwnerBookingDetail />,
+    roles: ['owner'],
   },
 ]

@@ -9,16 +9,22 @@ import CreateBoxIconNew from '../assets/icons/CreateBoxIconNew'
 const BookingsPage = () => {
   const [booking, setBooking] = useState([])
   const [columns, setColumns] = useState([])
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(false)
 
   const getBookings = () => {
     setLoading(true)
 
     api
-      .get('/bookings')
+      .get(`/bookings?page=${page}&limit=${limit}`)
       .then((response) => {
         setBooking(response.data.data.list || [])
         setColumns(response.data.data.columns || [])
+        setTotalItems(response.data.data.total || 0)
+        setTotalPages(response.data.data.totalPages || 0)
       })
       .catch((error) => {
         console.error(error?.response?.data?.message)
@@ -30,7 +36,7 @@ const BookingsPage = () => {
 
   useEffect(() => {
     getBookings()
-  }, [])
+  }, [page, limit])
 
   return (
     <div className="">
@@ -63,7 +69,19 @@ const BookingsPage = () => {
           </button>
         </NavLink>
       </div>
-      <DataTable data={booking} columns={columns} loading={loading} deleteUrl="/bookings" onRefresh={getBookings} />
+      <DataTable
+        data={booking}
+        columns={columns}
+        loading={loading}
+        deleteUrl="/bookings"
+        onRefresh={getBookings}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        totalItems={totalItems}
+        totalPages={totalPages}
+      />
     </div>
   )
 }

@@ -51,7 +51,7 @@ function ExpanderRow({ row, openExpand }) {
   )
 }
 
-const ReactTable = ({ dataRows, dataColumns, prefix, deleteUrl, onRefresh }) => {
+const ReactTable = ({ dataRows, dataColumns, prefix, deleteUrl, onRefresh, updateUrl }) => {
   const prefixColumns = [
     {
       id: 'expander',
@@ -82,6 +82,7 @@ const ReactTable = ({ dataRows, dataColumns, prefix, deleteUrl, onRefresh }) => 
               deleteUrl={deleteUrl}
               onRefresh={onRefresh}
               rowData={row.original}
+              updateUrl={updateUrl}
             />
           </div>
         )
