@@ -22,17 +22,32 @@ A full-stack Meeting Room Booking System built with React, Node.js, Express, Mon
 - Booking duration calculation
 - Pagination support
 
-### Dashboard
+### Permissions
 
 #### User
 
-- View current active booking
+## CAN
+
+- ● Create booking
+- ● View all bookings
+- ● Delete their own bookings only
+
+## CANNOT
+
+- ● Delete others’ bookings
+- ● Manage users
 
 #### Admin
 
 - View current active booking
 - View total bookings
 - View total users
+- Create users
+- Delete users
+- Change user roles
+- View all users
+- View all bookings
+- Delete any booking
 
 #### Owner
 
@@ -265,19 +280,6 @@ git commit -m "Add new feature"
 ```bash
 git push origin feature/new-feature
 ```
-
----
-
-# Future Improvements
-
-- Meeting room management
-- Booking approval workflow
-- Email notifications
-- Calendar view
-- Booking analytics
-- Export reports
-- Real-time updates
-- Dark mode support
 
 ---
 
