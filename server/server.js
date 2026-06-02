@@ -16,6 +16,13 @@ app.use(
 app.use(express.json())
 app.use('/api', require('./endpoints'))
 
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Meeting Room Booking API Running',
+  })
+})
+
 const PORT = process.env.PORT
 connectDB().then(() => {
   app.listen(PORT, () => {
